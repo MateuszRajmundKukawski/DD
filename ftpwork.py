@@ -43,12 +43,12 @@ class FtpFun(object): #zgodnie z nowymi zasdami klasy musza dziedziczyc object
         print "File downloaded"
 
     def deleteFileFromFtp(self, fileName):
-        self.connectFTP(self):
+        self.connectFTP()
         self.ftp.delete(fileName)
         self.ftp.close()
 
     def connectAndPutFile(self, fileNameRamPut, fileNameLocalPut):
-        self.connectFTP(self):
+        self.connectFTP()
         with open(fileNameLocalPut, "r") as f: # tak nalezy pracowac z plikami (podobno)
             self.ftp.storlines('STOR '+fileNameRamPut, f)
         self.ftp.close()
@@ -64,8 +64,24 @@ class FtpFun(object): #zgodnie z nowymi zasdami klasy musza dziedziczyc object
         else:
             print "Problems with telnet connection"
             print tn.read_all()
-
         #return self.screen
+
+    def disconnectFTP(self):
+        '''
+        zamkniecie polaczenia z uzyciem wyjatkow, jesli sie uda(da sie zamknac to zamknie, jesli nie
+        zlapie wyjatek i go wydrukuje
+        nie jestem przekonany czy po kazdej operacji warto zamykac polaczenie, a nastepnie znowy sie laczyc
+        mysle, ze gdyby w konstruktorze uzyc self.self.connectFTP()
+        to dla calego zycia obiektu polaczenie bedzie dzialac, a gdy juz obiekt nie jest potrzebny wywolac
+        self.disconnectFTP()
+        '''
+        try: #probuje wykonac kod, jak sie nie uda przejdzie do bloku Exception,
+            self.ftp.close() #probuje bo nie wiem czy jak jest zamkniete to nie wywali bledu, ze nie ma czego zamknac
+        except Exception as err: # podanie po except Exception lapie wszystkie wyjatki, to nie jest dobra praktyka, ale nie wiem jaki tu powinien sie pojawic
+            print err #lepiej wiedziec co lapiemy, potem wiemy do dalej z tym fantem zrobic
+
+
+
 
 
 if __name__ == '__main__':
@@ -77,9 +93,15 @@ if __name__ == '__main__':
     
     scriptList = ["skrypt1.txt","skrypt2.txt"]
     resultList = [	"wynik1.txt", "wynik2.txt"]
+
+    ftpIp = '192.168.254.1'
+    user = 'a' #unikalbym takich nazw zmiennych, moga byc uzywane w jakism modyle i je nadpiszesz
+    passw = 'a'
+    path=".\\"
+    fault_file = 'MERA.txt'
     
     for scriptFile, resulFile  in zip(scriptList, resultList):
-        ff = FtpFun() #towrzy obiekt, tu mozesz podac dane np. ff=FtpFun('192.168.254.1', 'szatan', '666', 'd:\\tem\\)
+        ff = FtpFun(ftpIp, user, passw, path) #towrzy obiekt, tu mozesz podac dane np. ff=FtpFun('192.168.254.1', 'szatan', '666', 'd:\\tem\\')
         ff.connectAndPutFile(scriptFile, scriptFile)
         temp = ". " + scriptFile
         print ff.temp
@@ -87,3 +109,5 @@ if __name__ == '__main__':
         ff.connectAndDownloadFile(resulFile, resulFile)
         ff.deleteFileFromFtp(scriptFile)
         ff.deleteFileFromFtp(resulFile)
+        ff.disconnectFTP()
+    raw_input('koniec, dowolny klawisz by zamknac')
